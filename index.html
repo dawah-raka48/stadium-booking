@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>إدارة ملعب الجمعية</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div style="font-weight:900; font-size:18px;">إدارة ملعب الجمعية</div>
+          <div class="badge">Dashboard للحجوزات</div>
+        </div>
+      </div>
+
+      <div class="clockbox">
+        <div class="pill" style="display:flex; gap:10px; align-items:center;">
+          <div>
+            <div class="mini">الوقت</div>
+            <div id="nowTime" style="font-weight:900; letter-spacing:.5px;">--:--</div>
+          </div>
+          <div style="width:1px; height:44px; background:var(--border)"></div>
+          <div>
+            <div class="mini">التاريخ</div>
+            <div id="nowDate" style="font-weight:900;">--/--/----</div>
+          </div>
+        </div>
+
+        <div class="pill" style="text-align:right;">
+          <div class="mini">اليوم</div>
+          <div id="nowDay" style="font-weight:900; margin-top:2px;">--</div>
+        </div>
+
+        <div class="pill" style="margin-top:6px;">
+          <div class="mini">الثيم</div>
+          <select id="themeToggle" class="btn" style="padding:8px 10px; width:140px; margin-top:6px;">
+            <option value="dark">دارك</option>
+            <option value="light">لايت</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div style="font-weight:900; font-size:16px; margin-bottom:10px;">اختصارات سريعة</div>
+        <div class="navicons">
+          <a class="iconCard" href="new-booking.html">
+            <div class="iconRow">
+              <div style="font-weight:900;">حجز جديد</div>
+              <div>📝</div>
+            </div>
+            <div class="badge">إضافة حجز</div>
+          </a>
+
+          <a class="iconCard" href="pending.html">
+            <div class="iconRow">
+              <div style="font-weight:900;">معلقة</div>
+              <div>⏳</div>
+            </div>
+            <div class="badge">بانتظار التأكيد</div>
+          </a>
+
+          <a class="iconCard" href="confirmed.html">
+            <div class="iconRow">
+              <div style="font-weight:900;">مؤكدة</div>
+              <div>✅</div>
+            </div>
+            <div class="badge">محفوظة</div>
+          </a>
+
+          <a class="iconCard" href="stats.html">
+            <div class="iconRow">
+              <div style="font-weight:900;">إحصائيات</div>
+              <div>📊</div>
+            </div>
+            <div class="badge">حسب الشهر</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:900; font-size:16px; margin-bottom:10px;">ملخص سريع</div>
+        <div class="kv">
+          <div class="box">
+            <div class="mini">الحجوزات المعلقة</div>
+            <div style="font-weight:900; font-size:18px;" id="pendingCount">0</div>
+          </div>
+          <div class="box">
+            <div class="mini">الحجوزات المؤكدة</div>
+            <div style="font-weight:900; font-size:18px;" id="confirmedCount">0</div>
+          </div>
+        </div>
+        <hr class="sep"/>
+        <div class="mini">
+          للتفاصيل كاملة افتح صفحة الإحصائيات أو الحجوزات.
+        </div>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn primary" href="stats.html">عرض الإحصائيات</a>
+          <a class="btn" href="pending.html">الحجوزات المعلقة</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    startClock();
+    setupThemeToggle();
+
+    function refreshCounts(){
+      document.getElementById("pendingCount").textContent = getPending().length;
+      document.getElementById("confirmedCount").textContent = getConfirmed().length;
+    }
+    refreshCounts();
+    setInterval(refreshCounts, 5000);
+  </script>
+</body>
+</html>
