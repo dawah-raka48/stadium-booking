@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>حجز جديد</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div style="font-weight:900; font-size:18px;">حجز جديد / تعديل</div>
+          <div class="badge">ادخل بيانات الحجز</div>
+        </div>
+      </div>
+
+      <div class="clockbox" style="min-width:220px;">
+        <a class="btn" href="index.html">← الرئيسية</a>
+        <div class="pill" style="margin-top:6px;">
+          <div class="mini">الثيم</div>
+          <select id="themeToggle" class="btn" style="padding:8px 10px; width:140px; margin-top:6px;">
+            <option value="dark">دارك</option>
+            <option value="light">لايت</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <form class="form" id="bookingForm">
+          <div class="field">
+            <label>اسم الفريق</label>
+            <input id="teamName" placeholder="مثال: الأهلي" required />
+          </div>
+
+          <div class="field">
+            <label>تاريخ الحجز</label>
+            <input id="date" type="date" required />
+          </div>
+
+          <div class="field">
+            <label>وقت بداية الحجز</label>
+            <input id="startTime" type="time" required />
+          </div>
+
+          <div class="field">
+            <label>عدد الساعات</label>
+            <input id="hours" type="number" min="0.5" step="0.5" placeholder="مثال: 2" required />
+          </div>
+
+          <hr class="sep"/>
+
+          <div class="kv">
+            <div class="box">
+              <div class="mini">وقت الخروج</div>
+              <div id="endTime" style="font-weight:900; font-size:18px;">-</div>
+            </div>
+            <div class="box">
+              <div class="mini">السعر</div>
+              <div id="price" style="font-weight:900; font-size:18px;">-</div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+            <button type="submit" class="btn primary" id="submitBtn">حفظ الحجز</button>
+            <button type="button" class="btn" id="cancelBtn" disabled>إلغاء</button>
+          </div>
+
+          <div class="mini" style="margin-top:8px;">
+            * سعر الساعة الحالي: <b id="pricePerHourLabel">100</b>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:900; font-size:16px; margin-bottom:8px;">ملاحظات سريعة</div>
+        <div class="mini">
+          عند حفظ الحجز:
+          <ul style="margin-top:6px; line-height:1.9;">
+            <li>يتم حساب وقت الخروج والسعر تلقائيًا</li>
+            <li>بعد الحفظ: يتم تفريغ الفورم</li>
+            <li>منع التكرار حسب (اسم الفريق + تاريخ + وقت البداية)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    setupThemeToggle();
+
+    const form = document.getElementById("bookingForm");
+    const teamNameEl = document.getElementById("teamName");
+    const dateEl = document.getElementById("date");
+    const startTimeEl = document.getElementById("startTime");
+    const hoursEl = document.getElementById("hours");
+    const endTimeEl = document.getElementById("endTime");
+    const priceEl = document.getElementById("price");
+    const submitBtn = document.getElementById("submitBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const pricePerHourLabel = document.getElementById("pricePerHourLabel");
+
+    pricePerHourLabel.textContent = String(getPricePerHour());
+
+    setFormCalc({
+      startTimeEl, hoursEl, endTimeEl, priceEl
+    });
+
+    // Detect edit mode
+    const url = new URL(location.href);
+    const editPendingId = url.searchParams.get("editPending");
+    const editConfirmedId = url.searchParams.get("editConfirmed");
+
+    let editMode = null; // "pending" | "confirmed"
+    let editId = null;
+
+    if (editPendingId) {
+      editMode = "pending";
+      editId = editPendingId;
+      const bk = getPending().find(x => x.id === editId);
+      if (!bk) { showToast("الحجز غير موجود", "danger"); }
+      else {
+        teamNameEl.value = bk.teamName;
+        dateEl.value = bk.date;
+        startTimeEl.value = bk.startTime;
+        hoursEl.value = bk.hours;
+        endTimeEl.textContent = bk.endTime;
+        priceEl.textContent = money(bk.price);
+        submitBtn.textContent = "تحديث الحجز";
+        cancelBtn.disabled = false;
+      }
+    }
+
+    if (editConfirmedId) {
+      editMode = "confirmed";
+      editId = editConfirmedId;
+      const bk = getConfirmed().find(x => x.id === editId);
+      if (!bk) { showToast("الحجز غير موجود", "danger"); }
+      else {
+        teamNameEl.value = bk.teamName;
+        dateEl.value = bk.date;
+        startTimeEl.value = bk.startTime;
+        hoursEl.value = bk.hours;
+        endTimeEl.textContent = bk.endTime;
+        priceEl.textContent = money(bk.price);
+        submitBtn.textContent = "تحديث الحجز";
+        cancelBtn.disabled = false;
+      }
+    }
+
+    cancelBtn.addEventListener("click", () => {
+      if (editMode === "pending") location.href = "pending.html";
+      else if (editMode === "confirmed") location.href = "confirmed.html";
+      else location.href = "index.html";
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const payload = {
+        teamName: teamNameEl.value.trim(),
+        date: dateEl.value,
+        startTime: startTimeEl.value,
+        hours: hoursEl.value
+      };
+
+      if (editMode === null) {
+        const res = addPendingBooking(payload);
+        if (!res.ok) {
+          if (res.reason === "duplicate") showToast("هذا الحجز موجود مسبقًا (لا يسمح بالتكرار).", "danger");
+          return;
+        }
+        showToast("تم حفظ الحجز في المعلقة ✅", "success");
+        form.reset();
+        endTimeEl.textContent = "-";
+        priceEl.textContent = "-";
+        return;
+      }
+
+      if (editMode === "pending") {
+        const res = updatePendingBooking(editId, payload);
+        if (!res.ok) {
+          if (res.reason === "duplicate") showToast("تحديث غير مسموح: حجز مكرر بنفس (فريق+تاريخ+وقت).", "danger");
+          else showToast("حدث خطأ أثناء التعديل", "danger");
+          return;
+        }
+        showToast("تم تحديث الحجز في المعلقة ✅", "success");
+        location.href = "pending.html";
+      }
+
+      if (editMode === "confirmed") {
+        const res = updateConfirmedBooking(editId, payload);
+        if (!res.ok) {
+          if (res.reason === "duplicate") showToast("تحديث غير مسموح: حجز مكرر بنفس (فريق+تاريخ+وقت).", "danger");
+          else showToast("حدث خطأ أثناء التعديل", "danger");
+          return;
+        }
+        showToast("تم تحديث الحجز المؤكد ✅", "success");
+        location.href = "confirmed.html";
+      }
+    });
+  </script>
+</body>
+</html>
